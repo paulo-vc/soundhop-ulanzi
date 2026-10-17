@@ -1,18 +1,21 @@
 import { spawn } from 'child_process';
+import { EventEmitter } from 'events';
 import { createInterface } from 'readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const HOST_SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'audio-host.ps1');
+const EXE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'bin', 'soundhop-helper.exe');
 const REQUEST_TIMEOUT = 8000;
 
 /**
- * Talks to a long-running PowerShell process (audio-host.ps1) that wraps the
- * Windows Core Audio APIs. Keeping it alive avoids paying the C# compile cost
- * on every key press.
+ * Talks to bin/soundhop-helper.exe, a small native process built from
+ * native/SoundHopHelper.cs that wraps the Windows Core Audio APIs.
+ * Requests are tab-separated lines. The helper emits 'audio' whenever a
+ * default device or a mute state changes, so nothing here polls.
  */
-export default class AudioService {
+export default class AudioService extends EventEmitter {
   constructor() {
+    super();
     this.proc = null;
     this.ready = null;
     this.nextId = 1;
@@ -23,23 +26,15 @@ export default class AudioService {
     if (this.ready) return this.ready;
 
     this.ready = new Promise((resolve, reject) => {
-      const proc = spawn('powershell.exe', [
-        '-NoProfile', '-NoLogo', '-NonInteractive',
-        '-ExecutionPolicy', 'Bypass',
-        '-File', HOST_SCRIPT,
-      ], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+      const proc = spawn(EXE, [], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] });
       this.proc = proc;
 
-      const rl = createInterface({ input: proc.stdout, crlfDelay: Infinity });
-      rl.on('line', (line) => {
+      createInterface({ input: proc.stdout, crlfDelay: Infinity }).on('line', (line) => {
         let msg;
         try { msg = JSON.parse(line); } catch { return; }
 
-        if (msg.id === 0) {
-          if (msg.ok) resolve();
-          else reject(new Error(msg.error || 'audio host failed to start'));
-          return;
-        }
+        if (msg.event) return this.emit(msg.event, msg);
+        if (msg.id === 0) return msg.ok ? resolve() : reject(new Error(msg.error || 'audio helper failed to start'));
 
         const req = this.pending.get(msg.id);
         if (!req) return;
@@ -49,14 +44,12 @@ export default class AudioService {
         else req.reject(new Error(msg.error));
       });
 
-      proc.stderr.on('data', (d) => console.warn('[audio-host]', d.toString()));
-
+      proc.on('error', reject);
       proc.on('exit', (code) => {
-        console.warn(`[audio-host] exited with code ${code}`);
-        reject(new Error(`audio host exited (${code})`));
+        reject(new Error(`audio helper exited (${code})`));
         for (const req of this.pending.values()) {
           clearTimeout(req.timer);
-          req.reject(new Error('audio host exited'));
+          req.reject(new Error('audio helper exited'));
         }
         this.pending.clear();
         if (this.proc === proc) {
@@ -69,16 +62,16 @@ export default class AudioService {
     return this.ready;
   }
 
-  async request(line) {
+  async request(...parts) {
     await this.start();
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`audio host timeout: ${line}`));
+        reject(new Error(`audio helper timeout: ${parts[0]}`));
       }, REQUEST_TIMEOUT);
       this.pending.set(id, { resolve, reject, timer });
-      this.proc.stdin.write(`${id} ${line}\n`);
+      this.proc.stdin.write([id, ...parts].join('\t') + '\n');
     });
   }
 
@@ -92,21 +85,20 @@ export default class AudioService {
     if (!/^[\w{}.\-]+$/.test(deviceId)) {
       return Promise.reject(new Error(`invalid device id: ${deviceId}`));
     }
-    return this.request(`set ${deviceId}`);
+    return this.request('set', deviceId);
   }
 
   mute(deviceId, mute) {
     if (!/^[\w{}.\-]+$/.test(deviceId)) {
       return Promise.reject(new Error(`invalid device id: ${deviceId}`));
     }
-    return this.request(`mute ${deviceId} ${mute ? 1 : 0}`);
+    return this.request('mute', deviceId, mute ? 1 : 0);
   }
 
   stop() {
-    if (this.proc) {
-      this.proc.stdin.write('0 exit\n');
-      this.proc.kill();
-    }
+    if (!this.proc) return;
+    try { this.proc.stdin.write('0\texit\n'); } catch {}
+    this.proc.kill();
   }
 }
 
@@ -118,4 +110,5 @@ export default class AudioService {
  * @property {string} iface  e.g. "Realtek(R) Audio"
  * @property {boolean} isDefault
  * @property {boolean} isDefaultComm
+ * @property {boolean} muted
  */

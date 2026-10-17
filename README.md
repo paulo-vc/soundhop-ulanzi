@@ -37,7 +37,8 @@ Cada troca define o dispositivo como **Dispositivo Padrão** *e* **Dispositivo d
 
 **Geral**
 - As teclas acompanham mudanças feitas fora do plugin (configurações do Windows, botão do headset, Discord…).
-- Sem executáveis de terceiros: usa as APIs de áudio do próprio Windows (`IMMDeviceEnumerator`, `IPolicyConfig`, `IAudioEndpointVolume`) por meio de um helper PowerShell + C#.
+- Leve: um helper nativo de 17 KB compilado com o `csc.exe` que já vem no Windows, usando as APIs de áudio do próprio sistema (`IMMDeviceEnumerator`, `IPolicyConfig`, `IAudioEndpointVolume`). Sem PowerShell, sem executáveis de terceiros.
+- Orientado a eventos: o Windows avisa quando o dispositivo padrão ou o mute muda, então nada fica consultando o sistema em loop.
 - Interface em português e inglês.
 
 ## Instalação
@@ -49,11 +50,11 @@ Cada troca define o dispositivo como **Dispositivo Padrão** *e* **Dispositivo d
 ### A partir do código-fonte
 
 ```bash
-cd com.ulanzi.soundhop.ulanziPlugin
-npm install --omit=dev
+powershell -ExecutionPolicy Bypass -File tools/build-helper.ps1
+cd com.ulanzi.soundhop.ulanziPlugin && npm install --omit=dev
 ```
 
-Copie a pasta (com `node_modules`) para o diretório de plugins acima. Para gerar o zip de release:
+Copie a pasta (com `bin` e `node_modules`) para o diretório de plugins acima. Para gerar o zip de release (já compila o helper):
 
 ```bash
 powershell -ExecutionPolicy Bypass -File tools/pack.ps1
@@ -82,15 +83,16 @@ node plugin/app.js 127.0.0.1 39069 pt_PT
 ### Estrutura
 
 ```
+native/SoundHopHelper.cs        # helper nativo (Core Audio via COM + eventos)
+tools/build-helper.ps1          # compila o helper com o csc.exe do Windows
 com.ulanzi.soundhop.ulanziPlugin/
+├── bin/soundhop-helper.exe     # gerado pelo build-helper.ps1
 ├── manifest.json
 ├── plugin/
 │   ├── app.js              # serviço principal (Node)
 │   ├── keyImage.js         # desenha ícone + nome do dispositivo na tecla
 │   ├── audio/
-│   │   ├── AudioEndpoints.cs   # Core Audio via COM
-│   │   ├── audio-host.ps1      # processo PowerShell persistente
-│   │   ├── AudioService.js     # ponte Node ↔ PowerShell
+│   │   ├── AudioService.js     # ponte Node ↔ helper nativo
 │   │   ├── cycle.js            # lógica de rotação
 │   │   └── mute.js             # lógica de mute
 │   └── ulanzi-api/         # SDK Node da Ulanzi

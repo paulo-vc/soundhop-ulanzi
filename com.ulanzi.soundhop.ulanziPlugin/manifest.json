@@ -3,7 +3,7 @@
   "Name": "SoundHop",
   "Description": "Cycle and mute the default playback and recording devices",
   "Icon": "assets/icons/plugin.png",
-  "Version": "1.1.0",
+  "Version": "1.2.0",
   "Category": "SoundHop",
   "CategoryIcon": "assets/icons/plugin.png",
   "CodePath": "plugin/app.js",

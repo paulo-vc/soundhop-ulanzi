@@ -1,11 +1,13 @@
-# Builds dist/SoundHop-<version>.zip with the plugin folder and its runtime
-# dependencies, ready to extract into %APPDATA%\Ulanzi\UlanziDeck\Plugins.
+# Builds dist/SoundHop-<version>.zip with the plugin folder, the compiled helper
+# and its runtime dependencies, ready to extract into %APPDATA%\Ulanzi\UlanziDeck\Plugins.
 # Usage: powershell -ExecutionPolicy Bypass -File tools/pack.ps1
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $name = 'com.ulanzi.soundhop.ulanziPlugin'
 $src = Join-Path $root $name
 $version = (Get-Content (Join-Path $src 'manifest.json') -Raw | ConvertFrom-Json).Version
+
+& (Join-Path $PSScriptRoot 'build-helper.ps1') | Out-Null
 
 $stage = Join-Path $root 'dist\stage'
 $zip = Join-Path $root "dist\SoundHop-$version.zip"

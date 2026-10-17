@@ -5,7 +5,6 @@ import { normalizeMuteSettings, muteTargets, isMuted } from './audio/mute.js';
 import { writeKeyImage, clearKeyImages, clearAllKeyImages } from './keyImage.js';
 
 const PLUGIN_UUID = 'com.ulanzi.ulanzistudio.soundhop';
-const POLL_INTERVAL = 1500;
 
 // Action UUID suffix -> what the key does and which device flow it controls.
 const KINDS = {
@@ -155,7 +154,7 @@ clearAllKeyImages();
 $UD.connect(PLUGIN_UUID);
 
 $UD.onConnected(() => {
-  audio.start().catch((err) => $UD.logMessage(`audio host: ${err.message}`, 'error'));
+  audio.start().catch((err) => $UD.logMessage(`audio helper: ${err.message}`, 'error'));
 });
 
 $UD.onAdd((jsn) => {
@@ -219,10 +218,11 @@ $UD.onSendToPlugin(async (jsn) => {
 });
 
 // Keep the keys in sync when the default device or mute state is changed
-// elsewhere (Windows sound settings, Discord, a headset button...).
-setInterval(() => {
+// elsewhere (Windows sound settings, Discord, a headset button...). The helper
+// pushes this event, so nothing polls while the deck is idle.
+audio.on('audio', () => {
   const visible = Object.keys(ACTIONS).filter((ctx) => ACTIONS[ctx].active);
   refresh(visible);
-}, POLL_INTERVAL);
+});
 
 process.on('exit', () => audio.stop());
