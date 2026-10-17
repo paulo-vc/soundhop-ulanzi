@@ -1,0 +1,24 @@
+{
+  "Name": "SoundHop",
+  "Description": "Alterna o dispositivo padrão de reprodução e de gravação",
+  "Actions": [
+    { "Name": "Alternar Saída", "Tooltip": "Alterna o dispositivo de reprodução padrão" },
+    { "Name": "Alternar Entrada", "Tooltip": "Alterna o microfone padrão" }
+  ],
+  "Localization": {
+    "Cycle through": "Alternar entre",
+    "All devices": "Todos os dispositivos",
+    "Selected devices": "Dispositivos selecionados",
+    "Devices": "Dispositivos",
+    "Refresh list": "Atualizar lista",
+    "Key text": "Texto no botão",
+    "Short name": "Nome curto",
+    "Full name": "Nome completo",
+    "Type": "Tipo",
+    "None": "Nenhum",
+    "Sets the device as Default Device and Default Communication Device.": "Define o dispositivo como Dispositivo Padrão e Dispositivo de Comunicação Padrão.",
+    "Disconnected device": "Dispositivo desconectado",
+    "current": "atual",
+    "Loading devices...": "Carregando dispositivos..."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "Name": "SoundHop",
+  "Description": "Cycle the default playback and recording devices",
+  "Actions": [
+    { "Name": "Switch Output", "Tooltip": "Cycle the default playback device" },
+    { "Name": "Switch Input", "Tooltip": "Cycle the default recording device" }
+  ],
+  "Localization": {
+    "Cycle through": "Cycle through",
+    "All devices": "All devices",
+    "Selected devices": "Selected devices",
+    "Devices": "Devices",
+    "Refresh list": "Refresh list",
+    "Key text": "Key text",
+    "Short name": "Short name",
+    "Full name": "Full name",
+    "Type": "Type",
+    "None": "None",
+    "Sets the device as Default Device and Default Communication Device.": "Sets the device as Default Device and Default Communication Device.",
+    "Disconnected device": "Disconnected device",
+    "current": "current",
+    "Loading devices...": "Loading devices..."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "Author": "paulo-vc",
+  "Name": "SoundHop",
+  "Description": "Cycle the default playback and recording devices",
+  "Icon": "assets/icons/plugin.png",
+  "Version": "1.0.0",
+  "Category": "SoundHop",
+  "CategoryIcon": "assets/icons/plugin.png",
+  "CodePath": "plugin/app.js",
+  "Type": "JavaScript",
+  "SupportedInMultiActions": true,
+  "UUID": "com.ulanzi.ulanzistudio.soundhop",
+  "Actions": [
+    {
+      "Name": "Switch Output",
+      "Icon": "assets/icons/output.png",
+      "UUID": "com.ulanzi.ulanzistudio.soundhop.output",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "Tooltip": "Cycle the default playback device",
+      "state": 0,
+      "States": [
+        { "Name": "Output", "Image": "assets/icons/output.png" }
+      ],
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": true
+    },
+    {
+      "Name": "Switch Input",
+      "Icon": "assets/icons/input.png",
+      "UUID": "com.ulanzi.ulanzistudio.soundhop.input",
+      "PropertyInspectorPath": "property-inspector/inspector.html",
+      "Tooltip": "Cycle the default recording device",
+      "state": 0,
+      "States": [
+        { "Name": "Input", "Image": "assets/icons/input.png" }
+      ],
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": true
+    }
+  ],
+  "OS": [
+    { "Platform": "windows", "MinimumVersion": "10" }
+  ],
+  "Software": {
+    "MinVersion": "2.1.4"
+  }
+}

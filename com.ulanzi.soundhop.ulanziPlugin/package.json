@@ -1,0 +1,16 @@
+{
+  "name": "ulanzi-soundhop",
+  "version": "1.0.0",
+  "description": "Ulanzi Studio plugin that cycles the default Windows audio devices",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node plugin/app.js",
+    "test:audio": "node plugin/audio/cli.js"
+  },
+  "author": "paulo-vc",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ws": "8.18.0"
+  }
+}

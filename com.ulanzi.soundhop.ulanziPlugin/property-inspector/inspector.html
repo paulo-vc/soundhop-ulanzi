@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover" />
+  <title>SoundHop</title>
+  <link rel="stylesheet" href="../libs/css/uspi.css">
+  <style>
+    .uspi-item.top { align-items: flex-start; }
+    .uspi-item-value.column { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .device-list { display: flex; flex-direction: column; gap: 8px; }
+    .device-list .uspi-item-child { line-height: 18px; }
+    .device-list label { display: inline-block; word-break: break-word; }
+    .device-missing label { opacity: .5; }
+    .device-default { color: var(--uspi-theme); font-size: 12px; margin-left: 4px; }
+    .hint { color: var(--uspi-unitcolor); font-size: 12px; }
+    .refresh { cursor: pointer; color: var(--uspi-theme); font-size: 12px; background: none; border: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div class="uspi-wrapper hidden">
+    <form id="property-inspector">
+
+      <div class="uspi-item top">
+        <div class="uspi-item-label" data-localize>Cycle through</div>
+        <div class="uspi-item-value column">
+          <div class="uspi-item-child">
+            <input id="mode_all" name="mode" type="radio" value="all" checked>
+            <label for="mode_all" data-localize>All devices</label>
+          </div>
+          <div class="uspi-item-child">
+            <input id="mode_selected" name="mode" type="radio" value="selected">
+            <label for="mode_selected" data-localize>Selected devices</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="uspi-item top device-section hidden">
+        <div class="uspi-item-label" data-localize>Devices</div>
+        <div class="uspi-item-value column">
+          <div class="device-list"></div>
+          <button type="button" class="refresh" data-localize>Refresh list</button>
+        </div>
+      </div>
+
+      <div class="uspi-item">
+        <div class="uspi-item-label" data-localize>Key text</div>
+        <select class="uspi-item-value select" name="label">
+          <option value="iface" data-localize="Short name">Short name</option>
+          <option value="name" data-localize="Full name">Full name</option>
+          <option value="desc" data-localize="Type">Type</option>
+          <option value="none" data-localize="None">None</option>
+        </select>
+      </div>
+
+      <div class="uspi-item">
+        <div class="uspi-item-label empty"></div>
+        <div class="uspi-item-value hint" data-localize>Sets the device as Default Device and Default Communication Device.</div>
+      </div>
+
+    </form>
+  </div>
+
+  <script src="../libs/js/constants.js"></script>
+  <script src="../libs/js/eventEmitter.js"></script>
+  <script src="../libs/js/timers.js"></script>
+  <script src="../libs/js/utils.js"></script>
+  <script src="../libs/js/ulanziApi.js"></script>
+  <script src="./inspector.js"></script>
+</body>
+</html>
