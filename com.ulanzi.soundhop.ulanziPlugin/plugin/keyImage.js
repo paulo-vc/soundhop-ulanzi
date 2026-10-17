@@ -43,7 +43,7 @@ export function wrapText(text) {
   return [clean.slice(0, cut).trim(), ellipsize(clean.slice(cut).trim())].filter(Boolean);
 }
 
-export function renderSvg(iconPath, text) {
+export function renderSvg(iconPath, text, { background = '#17191d' } = {}) {
   const icon = iconDataUri(iconPath);
   const lines = wrapText(text);
   const iconBox = lines.length === 0 ? { x: 16, y: 16, s: 112 }
@@ -58,7 +58,7 @@ export function renderSvg(iconPath, text) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" ` +
     `width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">` +
-    `<rect width="${SIZE}" height="${SIZE}" fill="#17191d"/>` +
+    `<rect width="${SIZE}" height="${SIZE}" fill="${background}"/>` +
     `<image x="${iconBox.x}" y="${iconBox.y}" width="${iconBox.s}" height="${iconBox.s}" href="${icon}" xlink:href="${icon}"/>` +
     textSvg + `</svg>`;
 }
@@ -67,14 +67,14 @@ export function renderSvg(iconPath, text) {
  * Writes the key image and returns its plugin-relative path. Alternates
  * between two files per key so the host never caches a stale image.
  */
-export function writeKeyImage(context, iconPath, text) {
+export function writeKeyImage(context, iconPath, text, options) {
   const dir = path.join(PLUGIN_ROOT, RUNTIME_DIR);
   fs.mkdirSync(dir, { recursive: true });
   const id = crypto.createHash('sha1').update(context).digest('hex').slice(0, 12);
   const slot = (slots.get(context) ?? 1) ^ 1;
   slots.set(context, slot);
   const file = `${id}-${slot}.svg`;
-  fs.writeFileSync(path.join(dir, file), renderSvg(iconPath, text), 'utf8');
+  fs.writeFileSync(path.join(dir, file), renderSvg(iconPath, text, options), 'utf8');
   return `./${RUNTIME_DIR}/${file}`;
 }
 

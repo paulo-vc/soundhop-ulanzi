@@ -95,6 +95,13 @@ export default class AudioService {
     return this.request(`set ${deviceId}`);
   }
 
+  mute(deviceId, mute) {
+    if (!/^[\w{}.\-]+$/.test(deviceId)) {
+      return Promise.reject(new Error(`invalid device id: ${deviceId}`));
+    }
+    return this.request(`mute ${deviceId} ${mute ? 1 : 0}`);
+  }
+
   stop() {
     if (this.proc) {
       this.proc.stdin.write('0 exit\n');

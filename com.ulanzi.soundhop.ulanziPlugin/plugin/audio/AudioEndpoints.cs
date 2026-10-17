@@ -78,6 +78,24 @@ namespace UlanziAudio
         [PreserveSig] int SetEndpointVisibility([MarshalAs(UnmanagedType.LPWStr)] string deviceId, int visible);
     }
 
+    [ComImport, Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioEndpointVolume
+    {
+        [PreserveSig] int RegisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int UnregisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int GetChannelCount(out int count);
+        [PreserveSig] int SetMasterVolumeLevel(float levelDB, ref Guid eventContext);
+        [PreserveSig] int SetMasterVolumeLevelScalar(float level, ref Guid eventContext);
+        [PreserveSig] int GetMasterVolumeLevel(out float levelDB);
+        [PreserveSig] int GetMasterVolumeLevelScalar(out float level);
+        [PreserveSig] int SetChannelVolumeLevel(int channel, float levelDB, ref Guid eventContext);
+        [PreserveSig] int SetChannelVolumeLevelScalar(int channel, float level, ref Guid eventContext);
+        [PreserveSig] int GetChannelVolumeLevel(int channel, out float levelDB);
+        [PreserveSig] int GetChannelVolumeLevelScalar(int channel, out float level);
+        [PreserveSig] int SetMute(int mute, ref Guid eventContext);
+        [PreserveSig] int GetMute(out int mute);
+    }
+
     [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
     class MMDeviceEnumeratorComObject { }
 
@@ -106,6 +124,29 @@ namespace UlanziAudio
                 return pv.vt == VT_LPWSTR ? Marshal.PtrToStringUni(pv.pointerValue) : "";
             }
             finally { PropVariantClear(ref pv); }
+        }
+
+        const int CLSCTX_ALL = 23;
+        static Guid IID_IAudioEndpointVolume = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
+
+        static IAudioEndpointVolume VolumeOf(IMMDevice dev)
+        {
+            object o;
+            Marshal.ThrowExceptionForHR(dev.Activate(ref IID_IAudioEndpointVolume, CLSCTX_ALL, IntPtr.Zero, out o));
+            return (IAudioEndpointVolume)o;
+        }
+
+        static bool IsMuted(IMMDevice dev)
+        {
+            try
+            {
+                var vol = VolumeOf(dev);
+                int m;
+                vol.GetMute(out m);
+                Marshal.ReleaseComObject(vol);
+                return m != 0;
+            }
+            catch { return false; }
         }
 
         static string DefaultId(IMMDeviceEnumerator en, EDataFlow flow, ERole role)
@@ -165,13 +206,15 @@ namespace UlanziAudio
                     iface = ReadString(store, PKEY_DeviceInterface_FriendlyName);
                     Marshal.ReleaseComObject(store);
                 }
+                bool muted = IsMuted(dev);
                 Marshal.ReleaseComObject(dev);
 
                 items.Add(string.Format(
-                    "{{\"id\":\"{0}\",\"name\":\"{1}\",\"desc\":\"{2}\",\"iface\":\"{3}\",\"isDefault\":{4},\"isDefaultComm\":{5}}}",
+                    "{{\"id\":\"{0}\",\"name\":\"{1}\",\"desc\":\"{2}\",\"iface\":\"{3}\",\"isDefault\":{4},\"isDefaultComm\":{5},\"muted\":{6}}}",
                     Esc(id), Esc(name), Esc(desc), Esc(iface),
                     id == defConsole ? "true" : "false",
-                    id == defComm ? "true" : "false"));
+                    id == defComm ? "true" : "false",
+                    muted ? "true" : "false"));
             }
             Marshal.ReleaseComObject(col);
             return "[" + string.Join(",", items.ToArray()) + "]";
@@ -186,6 +229,25 @@ namespace UlanziAudio
                 return "{\"render\":" + ListFlow(en, EDataFlow.eRender) + ",\"capture\":" + ListFlow(en, EDataFlow.eCapture) + "}";
             }
             finally { Marshal.ReleaseComObject(en); }
+        }
+
+        public static void SetMute(string deviceId, bool mute)
+        {
+            var en = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
+            IMMDevice dev = null;
+            try
+            {
+                Marshal.ThrowExceptionForHR(en.GetDevice(deviceId, out dev));
+                var vol = VolumeOf(dev);
+                Guid ctx = Guid.Empty;
+                Marshal.ThrowExceptionForHR(vol.SetMute(mute ? 1 : 0, ref ctx));
+                Marshal.ReleaseComObject(vol);
+            }
+            finally
+            {
+                if (dev != null) Marshal.ReleaseComObject(dev);
+                Marshal.ReleaseComObject(en);
+            }
         }
 
         // Sets the device as default for console, multimedia and communications.

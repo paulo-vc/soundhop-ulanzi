@@ -1,9 +1,23 @@
 {
   "Name": "SoundHop",
-  "Description": "Cycle the default playback and recording devices",
+  "Description": "Cycle and mute the default playback and recording devices",
   "Actions": [
-    { "Name": "Switch Output", "Tooltip": "Cycle the default playback device" },
-    { "Name": "Switch Input", "Tooltip": "Cycle the default recording device" }
+    {
+      "Name": "Switch Output",
+      "Tooltip": "Cycle the default playback device"
+    },
+    {
+      "Name": "Switch Input",
+      "Tooltip": "Cycle the default recording device"
+    },
+    {
+      "Name": "Mute Microphone",
+      "Tooltip": "Mute or unmute the microphone"
+    },
+    {
+      "Name": "Mute Audio",
+      "Tooltip": "Mute or unmute the speakers / headphones"
+    }
   ],
   "Localization": {
     "Cycle through": "Cycle through",
@@ -19,6 +33,13 @@
     "Sets the device as Default Device and Default Communication Device.": "Sets the device as Default Device and Default Communication Device.",
     "Disconnected device": "Disconnected device",
     "current": "current",
-    "Loading devices...": "Loading devices..."
+    "Loading devices...": "Loading devices...",
+    "Applies to": "Applies to",
+    "Default device": "Default device",
+    "Key behavior": "Key behavior",
+    "Press to toggle": "Press to toggle",
+    "Hold to talk": "Hold to talk (push-to-talk)",
+    "State (MUTED / LIVE)": "State (MUTED / LIVE)",
+    "The key turns red while muted and follows mute changes made outside the plugin.": "The key turns red while muted and follows mute changes made outside the plugin."
   }
 }

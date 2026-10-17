@@ -2,6 +2,7 @@
 # Protocol (one line per message, UTF-8):
 #   in : <reqId> list
 #   in : <reqId> set <deviceId>
+#   in : <reqId> mute <deviceId> <0|1>
 #   out: {"id":<reqId>,"ok":true,"data":...} | {"id":<reqId>,"ok":false,"error":"..."}
 $ErrorActionPreference = 'Stop'
 $utf8 = New-Object System.Text.UTF8Encoding $false
@@ -43,6 +44,11 @@ while ($true) {
             }
             'set' {
                 [UlanziAudio.Endpoints]::SetDefault($parts[2])
+                Write-Line ('{"id":' + $id + ',"ok":true,"data":null}')
+            }
+            'mute' {
+                $args2 = $parts[2].Split(' ')
+                [UlanziAudio.Endpoints]::SetMute($args2[0], $args2[1] -eq '1')
                 Write-Line ('{"id":' + $id + ',"ok":true,"data":null}')
             }
             'exit' { exit 0 }

@@ -1,9 +1,23 @@
 {
   "Name": "SoundHop",
-  "Description": "Alterna o dispositivo padrão de reprodução e de gravação",
+  "Description": "Alterna e muta os dispositivos padrão de reprodução e gravação",
   "Actions": [
-    { "Name": "Alternar Saída", "Tooltip": "Alterna o dispositivo de reprodução padrão" },
-    { "Name": "Alternar Entrada", "Tooltip": "Alterna o microfone padrão" }
+    {
+      "Name": "Alternar Saída",
+      "Tooltip": "Alterna o dispositivo de reprodução padrão"
+    },
+    {
+      "Name": "Alternar Entrada",
+      "Tooltip": "Alterna o microfone padrão"
+    },
+    {
+      "Name": "Mutar Microfone",
+      "Tooltip": "Muta ou desmuta o microfone"
+    },
+    {
+      "Name": "Mutar Áudio",
+      "Tooltip": "Muta ou desmuta os alto-falantes / fones"
+    }
   ],
   "Localization": {
     "Cycle through": "Alternar entre",
@@ -19,6 +33,13 @@
     "Sets the device as Default Device and Default Communication Device.": "Define o dispositivo como Dispositivo Padrão e Dispositivo de Comunicação Padrão.",
     "Disconnected device": "Dispositivo desconectado",
     "current": "atual",
-    "Loading devices...": "Carregando dispositivos..."
+    "Loading devices...": "Carregando dispositivos...",
+    "Applies to": "Aplicar em",
+    "Default device": "Dispositivo padrão",
+    "Key behavior": "Comportamento",
+    "Press to toggle": "Apertar para alternar",
+    "Hold to talk": "Segurar para falar (push-to-talk)",
+    "State (MUTED / LIVE)": "Estado (MUDO / ATIVO)",
+    "The key turns red while muted and follows mute changes made outside the plugin.": "A tecla fica vermelha quando mudo e acompanha mudanças de mute feitas fora do plugin."
   }
 }

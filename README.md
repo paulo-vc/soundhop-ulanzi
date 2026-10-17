@@ -5,26 +5,39 @@
 <h1 align="center">SoundHop</h1>
 
 <p align="center">
-  Pule entre seus dispositivos de áudio com um toque no Ulanzi Deck.<br>
-  <em>Hop between your audio devices with one key press on the Ulanzi Deck.</em>
+  Troque e mute seus dispositivos de áudio com um toque no Ulanzi Deck.<br>
+  <em>Switch and mute your audio devices with one key press on the Ulanzi Deck.</em>
 </p>
 
 ---
 
-Plugin para o **Ulanzi Studio** (Windows) que alterna o dispositivo de áudio padrão a cada toque na tecla:
+Plugin para o **Ulanzi Studio** (Windows) com quatro ações:
 
-- **Alternar Saída** — alto-falantes, fones, headsets…
-- **Alternar Entrada** — microfones.
+| Ação | O que faz |
+|------|-----------|
+| **Alternar Saída** | Pula para o próximo alto-falante / fone / headset |
+| **Alternar Entrada** | Pula para o próximo microfone |
+| **Mutar Microfone** | Muta / desmuta o microfone, com indicador na tecla |
+| **Mutar Áudio** | Muta / desmuta a saída de áudio, com indicador na tecla |
 
 Cada troca define o dispositivo como **Dispositivo Padrão** *e* **Dispositivo de Comunicação Padrão**, então Discord, Teams e afins acompanham a troca.
 
 ## Recursos
 
+**Alternar**
 - Alternar entre **todos** os dispositivos ativos ou só entre os **selecionados**.
 - O nome do dispositivo atual aparece na tecla (nome curto, nome completo, tipo ou nenhum).
-- A tecla se atualiza sozinha se o dispositivo for trocado fora do plugin.
 - Dispositivos desconectados continuam salvos na seleção e voltam ao ciclo quando reconectados.
-- Sem executáveis de terceiros: usa as APIs de áudio do próprio Windows (`IMMDeviceEnumerator` / `IPolicyConfig`) por meio de um helper PowerShell + C#.
+
+**Mutar**
+- Mute global no nível do Windows: vale para qualquer app (Discord, Teams, Meet, jogos…).
+- Indicador: a tecla fica **vermelha com o ícone riscado** quando mudo e mostra `MUDO` / `ATIVO` (ou o nome do dispositivo).
+- Aplica no dispositivo padrão ou em **todos** os dispositivos de uma vez.
+- Microfone com modo **push-to-talk**: segure a tecla para falar, solte para mutar.
+
+**Geral**
+- As teclas acompanham mudanças feitas fora do plugin (configurações do Windows, botão do headset, Discord…).
+- Sem executáveis de terceiros: usa as APIs de áudio do próprio Windows (`IMMDeviceEnumerator`, `IPolicyConfig`, `IAudioEndpointVolume`) por meio de um helper PowerShell + C#.
 - Interface em português e inglês.
 
 ## Instalação
@@ -78,7 +91,8 @@ com.ulanzi.soundhop.ulanziPlugin/
 │   │   ├── AudioEndpoints.cs   # Core Audio via COM
 │   │   ├── audio-host.ps1      # processo PowerShell persistente
 │   │   ├── AudioService.js     # ponte Node ↔ PowerShell
-│   │   └── cycle.js            # lógica de rotação
+│   │   ├── cycle.js            # lógica de rotação
+│   │   └── mute.js             # lógica de mute
 │   └── ulanzi-api/         # SDK Node da Ulanzi
 ├── property-inspector/     # tela de configuração
 └── libs/                   # SDK HTML da Ulanzi

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover" />
+  <title>SoundHop</title>
+  <link rel="stylesheet" href="../libs/css/uspi.css">
+  <style>
+    .uspi-item.top { align-items: flex-start; }
+    .uspi-item-value.column { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .hint { color: var(--uspi-unitcolor); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="uspi-wrapper hidden">
+    <form id="property-inspector">
+
+      <div class="uspi-item top">
+        <div class="uspi-item-label" data-localize>Applies to</div>
+        <div class="uspi-item-value column">
+          <div class="uspi-item-child">
+            <input id="scope_default" name="scope" type="radio" value="default" checked>
+            <label for="scope_default" data-localize>Default device</label>
+          </div>
+          <div class="uspi-item-child">
+            <input id="scope_all" name="scope" type="radio" value="all">
+            <label for="scope_all" data-localize>All devices</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="uspi-item top mode-section hidden">
+        <div class="uspi-item-label" data-localize>Key behavior</div>
+        <div class="uspi-item-value column">
+          <div class="uspi-item-child">
+            <input id="mode_toggle" name="mode" type="radio" value="toggle" checked>
+            <label for="mode_toggle" data-localize>Press to toggle</label>
+          </div>
+          <div class="uspi-item-child">
+            <input id="mode_ptt" name="mode" type="radio" value="ptt">
+            <label for="mode_ptt" data-localize="Hold to talk">Hold to talk</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="uspi-item">
+        <div class="uspi-item-label" data-localize>Key text</div>
+        <select class="uspi-item-value select" name="label">
+          <option value="state" data-localize="State (MUTED / LIVE)">State (MUTED / LIVE)</option>
+          <option value="iface" data-localize="Short name">Short name</option>
+          <option value="name" data-localize="Full name">Full name</option>
+          <option value="none" data-localize="None">None</option>
+        </select>
+      </div>
+
+      <div class="uspi-item">
+        <div class="uspi-item-label empty"></div>
+        <div class="uspi-item-value hint" data-localize>The key turns red while muted and follows mute changes made outside the plugin.</div>
+      </div>
+
+    </form>
+  </div>
+
+  <script src="../libs/js/constants.js"></script>
+  <script src="../libs/js/eventEmitter.js"></script>
+  <script src="../libs/js/timers.js"></script>
+  <script src="../libs/js/utils.js"></script>
+  <script src="../libs/js/ulanziApi.js"></script>
+  <script src="./mute.js"></script>
+</body>
+</html>
