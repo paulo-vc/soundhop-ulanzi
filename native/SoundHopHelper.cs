@@ -220,6 +220,125 @@ namespace SoundHop
         [PreserveSig] int SetDefaultEndpoint([MarshalAs(UnmanagedType.LPWStr)] string deviceId, ERole role);
     }
 
+    // Undocumented WinRT factory behind "Settings > Volume mixer > app output device".
+    // Declared as IUnknown with the three IInspectable slots stubbed so it builds on C# 5.
+    [ComImport, Guid("ab3d4648-e242-459f-b02f-541c70306324"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioPolicyConfigFactory
+    {
+        [PreserveSig] int GetIids(IntPtr a, IntPtr b);
+        [PreserveSig] int GetRuntimeClassName(IntPtr a);
+        [PreserveSig] int GetTrustLevel(IntPtr a);
+        [PreserveSig] int u01(); [PreserveSig] int u02(); [PreserveSig] int u03(); [PreserveSig] int u04();
+        [PreserveSig] int u05(); [PreserveSig] int u06(); [PreserveSig] int u07(); [PreserveSig] int u08();
+        [PreserveSig] int u09(); [PreserveSig] int u10(); [PreserveSig] int u11(); [PreserveSig] int u12();
+        [PreserveSig] int u13(); [PreserveSig] int u14(); [PreserveSig] int u15(); [PreserveSig] int u16();
+        [PreserveSig] int u17(); [PreserveSig] int u18(); [PreserveSig] int u19();
+        [PreserveSig] int SetPersistedDefaultAudioEndpoint(uint processId, EDataFlow flow, ERole role, IntPtr deviceId);
+        [PreserveSig] int GetPersistedDefaultAudioEndpoint(uint processId, EDataFlow flow, ERole role, out IntPtr deviceId);
+        [PreserveSig] int ClearAllPersistedApplicationDefaultEndpoints();
+    }
+
+    static class AppRouting
+    {
+        [DllImport("combase.dll")] static extern int WindowsCreateString([MarshalAs(UnmanagedType.LPWStr)] string s, int len, out IntPtr h);
+        [DllImport("combase.dll")] static extern int WindowsDeleteString(IntPtr h);
+        [DllImport("combase.dll")] static extern int RoGetActivationFactory(IntPtr cls, ref Guid iid, out IntPtr factory);
+
+        static IAudioPolicyConfigFactory factory;
+        static bool tried;
+
+        static IAudioPolicyConfigFactory Factory()
+        {
+            if (tried) return factory;
+            tried = true;
+            const string cls = "Windows.Media.Internal.AudioPolicyConfig";
+            IntPtr h;
+            if (WindowsCreateString(cls, cls.Length, out h) != 0) return null;
+            try
+            {
+                // Windows 10 21H2+ / 11 IID; older builds used a different one (not supported).
+                var iid = new Guid("ab3d4648-e242-459f-b02f-541c70306324");
+                IntPtr p;
+                if (RoGetActivationFactory(h, ref iid, out p) != 0 || p == IntPtr.Zero) return null;
+                factory = (IAudioPolicyConfigFactory)Marshal.GetObjectForIUnknown(p);
+                Marshal.Release(p);
+            }
+            catch { factory = null; }
+            finally { WindowsDeleteString(h); }
+            return factory;
+        }
+
+        public static string Debug(IEnumerable<uint> pids, EDataFlow flow)
+        {
+            var f = Factory();
+            var items = new List<string>();
+            foreach (uint pid in pids)
+            {
+                string name = "";
+                try { name = Process.GetProcessById((int)pid).ProcessName; } catch { }
+                string dev = "";
+                if (f != null)
+                {
+                    IntPtr cur;
+                    int hr = f.GetPersistedDefaultAudioEndpoint(pid, flow, ERole.eMultimedia, out cur);
+                    if (hr != 0) dev = "hr=" + hr.ToString("x");
+                    else if (cur != IntPtr.Zero) { dev = Marshal.PtrToStringUni(WindowsGetStringRawBuffer(cur, IntPtr.Zero)); WindowsDeleteString(cur); }
+                }
+                items.Add("{\"pid\":" + pid + ",\"name\":" + Json.Str(name) + ",\"persisted\":" + Json.Str(dev) + "}");
+            }
+            return "{\"factory\":" + Json.Bool(f != null) + ",\"apps\":" + Json.Arr(items) + "}";
+        }
+
+        [DllImport("combase.dll")] static extern IntPtr WindowsGetStringRawBuffer(IntPtr h, IntPtr len);
+
+        /// <summary>Removes per-app output/input overrides so these apps follow the default device again.</summary>
+        /// <summary>
+        /// Moves running apps to the device. Apps that opened a device directly don't follow the
+        /// default, but Windows migrates their stream live when a per-app route is set; the route
+        /// is cleared afterwards so they go back to following the default.
+        /// </summary>
+        public static void MoveTo(IEnumerable<uint> pids, EDataFlow flow, string deviceId)
+        {
+            var f = Factory();
+            if (f == null) return;
+            string full = @"\\?\SWD#MMDEVAPI#" + deviceId + "#" +
+                (flow == EDataFlow.eRender ? "{e6327cad-dcec-4949-ae8a-991e976a79d2}" : "{2eef81be-33fa-4800-9670-1cd474972c3f}");
+            IntPtr h;
+            if (WindowsCreateString(full, full.Length, out h) != 0) return;
+            var list = new List<uint>(pids);
+            try
+            {
+                foreach (uint pid in list)
+                    foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia })
+                        try { f.SetPersistedDefaultAudioEndpoint(pid, flow, role, h); } catch { }
+            }
+            finally { WindowsDeleteString(h); }
+            Thread.Sleep(300);
+            Reset(list, flow);
+        }
+
+        public static void Reset(IEnumerable<uint> pids, EDataFlow flow)
+        {
+            var f = Factory();
+            if (f == null) return;
+            foreach (uint pid in pids)
+            {
+                foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia })
+                {
+                    try
+                    {
+                        IntPtr cur;
+                        if (f.GetPersistedDefaultAudioEndpoint(pid, flow, role, out cur) != 0) continue;
+                        if (cur == IntPtr.Zero) continue; // no override
+                        WindowsDeleteString(cur);
+                        f.SetPersistedDefaultAudioEndpoint(pid, flow, role, IntPtr.Zero);
+                    }
+                    catch { }
+                }
+            }
+        }
+    }
+
     [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class MMDeviceEnumeratorComObject { }
     [ComImport, Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9")] class PolicyConfigComObject { }
 
@@ -402,6 +521,17 @@ namespace SoundHop
                 Marshal.ThrowExceptionForHR(policy.SetDefaultEndpoint(id, ERole.eCommunications));
             }
             finally { Marshal.ReleaseComObject(policy); }
+
+            // Apps with their own device picked in the Windows volume mixer ignore the default.
+            // Clear those overrides for every app that has an audio session on this flow.
+            EDataFlow flow = ActiveIds(EDataFlow.eCapture).Contains(id) ? EDataFlow.eCapture : EDataFlow.eRender;
+            var pids = new HashSet<uint>();
+            foreach (var dev in Devices(flow))
+            {
+                try { foreach (var pid in SessionPids(dev, false)) pids.Add(pid); }
+                finally { Marshal.ReleaseComObject(dev); }
+            }
+            AppRouting.MoveTo(pids, flow, id);
         }
 
         public void SetMute(string id, bool mute)
@@ -491,6 +621,17 @@ namespace SoundHop
                 case "list": return audio.List();
                 case "set": audio.SetDefault(a[2]); return null;
                 case "mute": audio.SetMute(a[2], a[3] == "1"); return null;
+                case "routes":
+                    {
+                        var res = new List<string>();
+                        foreach (var dev in audio.DevicesOf(EDataFlow.eRender))
+                        {
+                            string id; dev.GetId(out id);
+                            res.Add("{\"device\":" + Json.Str(id) + ",\"info\":" + AppRouting.Debug(Audio.SessionPids(dev, a.Length > 2 && a[2] == "active"), EDataFlow.eRender) + "}");
+                            Marshal.ReleaseComObject(dev);
+                        }
+                        return Json.Arr(res);
+                    }
                 case "ping": return "\"pong\"";
                 default: throw new Exception("unknown command: " + a[1]);
             }
